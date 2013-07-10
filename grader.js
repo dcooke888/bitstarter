@@ -29,6 +29,7 @@ var sys = require('util');
 var rest = require('restler');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var TEMP_URL_FILE = "temp.html";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -63,7 +64,7 @@ var printJsonChecks = function(JsonOutput)  {
     console.log(outJson);
 };
 
-var runChecks = function(urlPath, htmlfile, checksFile) {
+var runChecks = function(urlPath, htmlFile, checksFile) {
     if(urlPath.length === 0) {
 	var checkJson = checkHtmlFile(htmlFile, checksFile);
 	printJsonChecks(checkJson);
@@ -78,10 +79,12 @@ var buildfn = function(checksFile) {
 	if(result instanceof Error) {
 	    console.error('Error: ' + util.format(response.message));
 	} else {
-	    var checkJson = checkHtmlFile(result, checksFile);
+	    fs.writeFileSync(TEMP_URL_FILE, result);
+	    var checkJson = checkHtmlFile(TEMP_URL_FILE, checksFile);
 	    printJsonChecks(checkJson);
 	}
     };
+    return urlResponse;
 };
 
 
@@ -95,7 +98,7 @@ if(require.main == module) {
     program
 	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
 	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-	.option('-u, --url <url_path>', 'Url path', clone(assertFileExists), "")
+	.option('-u, --url <url_path>', 'Url path')
 	.parse(process.argv);
     runChecks(program.url, program.file, program.checks);
 } else {
